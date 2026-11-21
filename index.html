@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NARATAKE · Neural Assistant</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e4000d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Naratake">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--ink:#14181f;--mute:#6b7380;--line:#dfe3e8;--soft:#eceff3;--acc:#d98a00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f14;--panel:#121820;--ink:#e6ebf2;--mute:#8793a3;--line:#222c38;--soft:#19212b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0f14;--panel:#121820;--ink:#e6ebf2;--mute:#8793a3;--line:#222c38;--soft:#19212b;color-scheme:dark}
+html,body,#root{height:100%}
+body{margin:0;color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(color-mix(in srgb,var(--acc) 7%,transparent) 1px,transparent 1px) 0 0/34px 34px,linear-gradient(90deg,color-mix(in srgb,var(--acc) 7%,transparent) 1px,transparent 1px) 0 0/34px 34px,radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--acc) 14%,transparent),transparent 60%),var(--bg)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:90px;pointer-events:none;z-index:49;background:linear-gradient(transparent,color-mix(in srgb,var(--acc) 9%,transparent),transparent);animation:scan 7s linear infinite}
+@keyframes scan{from{transform:translateY(-100px)}to{transform:translateY(100vh)}}
+.hud{position:relative;display:inline-flex;padding:5px;flex:none}.hud::before{content:"";position:absolute;inset:0;border:1px dashed var(--acc);border-radius:50%;animation:spin 18s linear infinite}.hud::after{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--acc) 35%,transparent);border-radius:50%}
+.tick{font:10px ui-monospace,Menlo,monospace;letter-spacing:.12em;color:var(--acc);white-space:nowrap;overflow:hidden;padding:3px 12px;text-shadow:0 0 6px var(--acc)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pn{background:linear-gradient(var(--acc),var(--acc)) 0 0/14px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 0/2px 14px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/14px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/2px 14px no-repeat,color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);border-radius:3px !important;backdrop-filter:blur(4px)}
+.fld{width:100%;background:color-mix(in srgb,var(--soft) 80%,transparent);border:1px solid var(--line);border-bottom:2px solid var(--acc);color:var(--ink);border-radius:0;padding:7px 9px;font:13px ui-monospace,Menlo,monospace;outline:none}
+.fld:focus{border-color:var(--acc)}
+.btn{background:var(--soft);border:0;box-shadow:inset 0 0 0 1px var(--line);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);padding:6px 12px;font:11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--ink)}
+.btn:hover{box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc)}
+.btn:hover{border-color:var(--acc)}
+.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600;box-shadow:0 0 12px color-mix(in srgb,var(--acc) 55%,transparent)}
+.pn{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 8%,transparent)}
+.chip{display:inline-flex;gap:4px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px}
+input[type=range]{accent-color:var(--acc);width:100%}
+.lbl{font:10px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}.lbl::before{content:"▸ ";color:var(--acc)}
+.g{transform-box:fill-box;transform-origin:center}
+@keyframes bl{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes wig{0%,100%{transform:rotate(0)}50%{transform:rotate(14deg)}}
+@keyframes flap{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1.2)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pul{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:1}}
+@keyframes blink{50%{opacity:0}}
+.idle .eye{animation:bl 4s infinite}.thinking .ear{animation:wig .6s infinite}.responding .mouth{animation:flap .22s infinite}
+.thinking .spin{animation:spin 1.6s linear infinite}.responding .spin{animation:spin .6s linear infinite}.idle .spin{animation:spin 14s linear infinite}
+.thinking .pul{animation:pul .8s infinite}.responding .pul{animation:pul .3s infinite}.idle .pul{animation:pul 3.5s infinite}
+.cur{animation:blink 1s infinite}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useRef,useMemo}=React;
+const html=htm.bind(React.createElement);
+
+/* ---------- icons ---------- */
+const P_={user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',cpu:'M9 9h6v6H9zM4 4h16v16H4zM9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3',send:'M22 2 11 13M22 2l-7 20-4-9-9-4z',key:'M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4',x:'M18 6 6 18M6 6l12 12',plus:'M12 5v14M5 12h14',panel:'M3 3h18v18H3zM15 3v18',spark:'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z',vol:'M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14'};
+const Ic=({n,s=16})=>html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d=${P_[n]}/></svg>`;
+
+/* ---------- avatars ---------- */
+const Avatar=({kind,status,size=84})=>{
+  const c=kind==='pelops'?html`<g>
+      <g class="g ear" style=${{transformOrigin:'30px 34px'}}><path d="M24 30 14 52l16-6z" fill="var(--acc)" opacity=".75"/></g>
+      <g class="g ear" style=${{transformOrigin:'70px 34px'}}><path d="M76 30l10 22-16-6z" fill="var(--acc)" opacity=".75"/></g>
+      <ellipse cx="50" cy="50" rx="27" ry="24" fill="var(--acc)"/>
+      <ellipse cx="50" cy="60" rx="14" ry="10" fill="#fff" opacity=".85"/>
+      <g class="g eye"><circle cx="40" cy="46" r="3.4" fill="#111"/><circle cx="60" cy="46" r="3.4" fill="#111"/></g>
+      <ellipse cx="50" cy="55" rx="4" ry="3" fill="#111"/>
+      <g class="g mouth" style=${{transformOrigin:'50px 64px'}}><path d="M44 63q6 7 12 0z" fill="#111"/></g></g>`
+  :kind==='yung'?html`<g>
+      <polygon points="50,8 88,30 88,70 50,92 12,70 12,30" fill="none" stroke="var(--acc)" strokeWidth="3"/>
+      <g class="g spin"><polygon points="50,24 76,66 24,66" fill="none" stroke="var(--acc)" strokeWidth="2.5"/></g>
+      <g class="g pul"><circle cx="50" cy="52" r="8" fill="var(--acc)"/></g></g>`
+  :html`<g><g class="g spin"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--acc)" strokeWidth="2" strokeDasharray="10 8"/></g>
+      <g class="g pul"><circle cx="50" cy="50" r="18" fill="var(--acc)"/></g></g>`;
+  return html`<svg class=${status} width=${size} height=${size} viewBox="0 0 100 100" aria-label=${'Avatar '+status}>${c}</svg>`;
+};
+
+/* ---------- data ---------- */
+const BEH0=[
+ {id:'pelops',name:'Pelops II',kind:'pelops',color:'#d98a00',a:72,b:68,c:78,w:82,d:'Challenge assumptions\nSpeak like a curious lab dog'},
+ {id:'yung',name:'Yung',kind:'yung',color:'#0ea5e9',a:45,b:12,c:10,w:8,d:'Always use bullet points'}];
+const PRO={
+ 'Field Researcher':{name:'Dr. Mori',role:'Field researcher',tone:'encouraging',interests:'kaiju biology, data logging, field sampling'},
+ 'Mech Pilot':{name:'Cmdr. Kade',role:'Mech pilot',tone:'direct',interests:'tactics, systems diagnostics, flight'},
+ 'Custom':{name:'',role:'',tone:'casual',interests:''}};
+const TONES=['direct','encouraging','formal','casual'];
+const STOP=new Set('the and but for with that this what how why when which who about into just like than then have has had not yes will would could should please tell more some any are was were you your can does from they them their there been being also very much many been make want need know think give take get got let its our out one'.split(' '));
+const kw=t=>[...new Set((t.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g)||[]).filter(w=>!STOP.has(w)))];
+
+/* ---------- simulated neural engine ---------- */
+function generate(input,P,B,L){
+  const keys=kw(input),topic=keys[0]||'this',name=P.name||'Operator';
+  const ints=(P.interests||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const hit=ints.find(i=>keys.some(k=>i.toLowerCase().includes(k)))||ints[0]||P.role||'your field';
+  const dir=(B.d||'').toLowerCase(),has=r=>r.test(dir);
+  const open={direct:`${name}.`,encouraging:`Good question, ${name}.`,formal:`Understood, ${name}.`,casual:`Hey ${name}!`}[P.tone]||`${name}.`;
+  const r=(P.role||'').toLowerCase();
+  const frame=/research|scien/.test(r)?'Treating this as a research question':/pilot|mech|soldier/.test(r)?'Reading this as a tactical problem':/student|learn/.test(r)?'Framing this as something to learn from':/engineer|dev/.test(r)?'Thinking about this like a system':'Looking at this plainly';
+  const pool=[
+   `Core idea: “${topic}” is clearest once you isolate what changes and what stays constant.`,
+   `Constraint: given your focus on ${hit}, weigh cost against reliability before committing.`,
+   `Method: define a measurable signal for ${topic}, vary one factor at a time, log the result.`,
+   `Model: if ${topic} behaves like y = f(x), estimate the slope first, then the curve.`,
+   `Risk: the usual failure is acting on ${topic} before the baseline is known.`];
+  const n=Math.max(1,Math.min(5,Math.round(1+B.a/100*2+B.b/100*2)));
+  let pts=pool.slice(0,n);
+  if(B.b<30)pts=pts.map(p=>p.split(': ')[1].split(',')[0].replace(/\.$/,'')+'.');
+  const steps=B.a>70&&!has(/bullet/);
+  let body=has(/bullet/)?pts.map(p=>'• '+p).join('\n'):steps?pts.map((p,i)=>`Step ${i+1} — ${p}`).join('\n'):pts.join(' ');
+  const out=[];
+  out.push(B.w<35&&B.b<40?open.replace(/^(Good question|Hey),? ?/,''):open+(B.w>65?' I like where this is heading.':''));
+  if(B.b>35)out.push(frame+', here’s how I’d break down “'+topic+'”.');
+  out.push(body);
+  if(L.length&&B.w>40&&B.b>45)out.push(`You keep returning to “${L[0].w}” — I’m weighting that here.`);
+  if(has(/challenge|assum/))out.push(`Challenge: what if your premise about ${topic} is wrong?`);
+  const qs=[`What outcome do you actually need from ${topic}?`,`What have you already ruled out?`,`Which part of ${topic} feels least certain to you?`];
+  if(B.c>30)out.push(qs[0]);
+  if(B.c>70)out.push(qs[1]);
+  if(B.w>60&&B.b>55)out.push('Happy to dig deeper whenever you are.');
+  let txt=out.join('\n\n');
+  if(has(/dog|lab|woof/))txt='*tail wag* '+txt+' Woof.';
+  return txt;
+}
+const compile=(P,B,L)=>`You are ${B.name}, an assistant modeled on Naratake.
+USER: ${P.name||'unknown'} | role: ${P.role||'n/a'} | address them in a ${P.tone} tone | interests: ${P.interests||'n/a'}${L.length?' | learned traits: '+L.map(x=>x.w).join(', '):''}
+BEHAVIOR (0-100): analytical depth ${B.a}, detail ${B.b}, curiosity ${B.c}, warmth ${B.w}.
+DIRECTIVES:\n${B.d||'(none)'}`;
+
+/* ---------- themes, parser, helpers ---------- */
+const THEMES={
+ pelops:{name:'Pelops II',bg:'#08121c',panel:'#0e1c2a',ink:'#e3f4f8',mute:'#7fa3b3',line:'#1c3a4f',soft:'#132a3b',acc:'#06b6d4',acc2:'#2dd4bf'},
+ yung:{name:'Yung',bg:'#121110',panel:'#1c1a18',ink:'#f5ecd9',mute:'#a39882',line:'#3a352e',soft:'#25221f',acc:'#f59e0b',acc2:'#fcd34d'},
+ jet:{name:'Jet Jaguar',bg:'#14161a',panel:'#1d2026',ink:'#f1f3f6',mute:'#aab1bd',line:'#c7ccd4',soft:'#262a32',acc:'#ef4444',acc2:'#eab308'},
+ ultima:{name:'Godzilla Ultima',bg:'#050507',panel:'#0d0c10',ink:'#f0e6e8',mute:'#9a8a90',line:'#3a1418',soft:'#17121a',acc:'#dc2626',acc2:'#6366f1'}};
+function mk(ex){
+ const t=ex.replace(/\s+/g,'').toLowerCase().match(/\d*\.?\d+(?:e[-+]?\d+)?|[a-z]+|[-+*/^(),]/g)||[];let i=0;
+ const F={sin:Math.sin,cos:Math.cos,tan:Math.tan,exp:Math.exp,ln:Math.log,log:Math.log10,sqrt:Math.sqrt,abs:Math.abs};
+ const E=()=>{let v=Tm();while(t[i]==='+'||t[i]==='-'){const o=t[i++],r=Tm(),a=v;v=s=>o==='+'?a(s)+r(s):a(s)-r(s)}return v};
+ const Tm=()=>{let v=Pw();while(t[i]==='*'||t[i]==='/'||(t[i]&&/^[a-z\d.(]/.test(t[i]))){const o=(t[i]==='*'||t[i]==='/')?t[i++]:'*',r=Pw(),a=v;v=s=>o==='*'?a(s)*r(s):a(s)/r(s)}return v};
+ const Pw=()=>{const b=U();if(t[i]==='^'){i++;const x=Pw();return s=>Math.pow(b(s),x(s))}return b};
+ const U=()=>{if(t[i]==='-'){i++;const v=U();return s=>-v(s)}if(t[i]==='+'){i++;return U()}return At()};
+ const At=()=>{const k=t[i++];if(k===undefined)throw 0;if(k==='('){const v=E();i++;return v}if(/^[\d.]/.test(k)){const n=+k;return()=>n}
+  if(F[k]&&t[i]==='('){i++;const v=E();i++;const f=F[k];return s=>f(v(s))}
+  if(k==='pi')return()=>Math.PI;if(k==='e')return()=>Math.E;
+  return s=>{if(!(k in s))throw 0;return s[k]}};
+ const f=E();if(i<t.length)throw 0;return f}
+const shape=(lines,P,B,plain)=>{
+ const n=Math.max(1,Math.round(1+B.b/100*(lines.length-1))),d=(B.d||'').toLowerCase();let o=lines.slice(0,n);
+ if(plain)return o.join(' ');
+ if(/bullet/.test(d)||B.a>70)o=o.map(x=>'• '+x);
+ let s=B.name+(B.w>60?` (for ${P.name||'you'})`:'')+':\n'+o.join('\n');
+ if(B.c>55)s+='\nFollow-up: what decision should this support?';
+ return /dog|lab|woof/.test(d)?'*tail wag* '+s+' Woof.':s};
+/* ---------- ui bits ---------- */
+const Sl=({l,lo,hi,v,set})=>html`<div class="mb-3"><div class="flex justify-between lbl"><span>${l}</span><span class="mono" style=${{color:'var(--acc)'}}>${v}</span></div>
+ <input type="range" min="0" max="100" value=${v} onChange=${e=>set(+e.target.value)}/><div class="flex justify-between text-[10px]" style=${{color:'var(--mute)'}}><span>${lo}</span><span>${hi}</span></div></div>`;
+const Fl=({l,children})=>html`<label class="block mb-3"><div class="lbl mb-1">${l}</div>${children}</label>`;
+
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+
+const Rs=({l,v,set,min,max,step})=>html`<div class="mb-2"><div class="flex justify-between lbl"><span>${l}</span><span class="mono" style=${{color:'var(--acc)'}}>${v}</span></div><input type="range" min=${min} max=${max} step=${step} value=${v} onChange=${e=>set(+e.target.value)}/></div>`;
+
+function build(pre,den,sc,wf,T){
+ const C=new THREE.Color(T.acc),C2=new THREE.Color(T.acc2),g=new THREE.Group();
+ const sph=r=>new THREE.Mesh(new THREE.SphereGeometry(r,10,8),new THREE.MeshBasicMaterial({color:C,wireframe:wf}));
+ const lines=(arr,col)=>{const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.BufferAttribute(new Float32Array(arr),3));return new THREE.LineSegments(ge,new THREE.LineBasicMaterial({color:col}))};
+ let an=null,v=0,e=0;
+ if(pre==='lattice'){const n=den,o=(n-1)/2,ps=(i,j,k)=>[(i-o)*.8,(j-o)*.8,(k-o)*.8],arr=[];
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let k=0;k<n;k++){const m=sph(.12*sc);m.position.set(...ps(i,j,k));g.add(m);v++;
+   [[1,0,0],[0,1,0],[0,0,1]].forEach(d=>{if(i+d[0]<n&&j+d[1]<n&&k+d[2]<n){arr.push(...ps(i,j,k),...ps(i+d[0],j+d[1],k+d[2]));e++}})}
+  g.add(lines(arr,C2))}
+ else if(pre==='poly'){const V=[],E=[];for(let i=0;i<16;i++)V.push([0,1,2,3].map(b=>(i>>b)&1?1:-1));
+  for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){const x=i^j;if((x&(x-1))===0)E.push([i,j])}
+  const ms=V.map(()=>{const m=sph(.1*sc);g.add(m);return m}),ge=lines(new Array(E.length*6).fill(0),C2);g.add(ge);
+  const tor=new THREE.Mesh(new THREE.TorusGeometry(2.2*sc,.02,6,den*8),new THREE.MeshBasicMaterial({color:C2,wireframe:wf}));g.add(tor);
+  an=t=>{const P=V.map(p=>{let [x,y,z,w]=p;let c=Math.cos(t*.7),s=Math.sin(t*.7);[x,w]=[x*c-w*s,x*s+w*c];c=Math.cos(t*.5);s=Math.sin(t*.5);[y,z]=[y*c-z*s,y*s+z*c];const k=1.8*sc/(3-w);return[x*k,y*k,z*k]});
+   P.forEach((p,i)=>ms[i].position.set(...p));const a=ge.geometry.attributes.position.array;E.forEach(([i,j],n)=>a.set([...P[i],...P[j]],n*6));ge.geometry.attributes.position.needsUpdate=true;tor.rotation.x=t*.3};
+  v=16;e=32}
+ else{const N=den*8,pg=new THREE.PlaneGeometry(4,4,N,N);pg.rotateX(-Math.PI/2);
+  g.add(new THREE.Points(pg,new THREE.PointsMaterial({color:C,size:.06*sc})));if(wf)g.add(new THREE.Mesh(pg,new THREE.MeshBasicMaterial({color:C2,wireframe:true})));
+  an=t=>{const p=pg.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,.5*sc*Math.sin(p.getX(i)*2+t*2)*Math.cos(p.getZ(i)*2+t*1.5));p.needsUpdate=true};
+  v=(N+1)**2;e=2*N*(N+1)}
+ return{g,an,v,e}}
+
+function Lab({P,B,T,onSnap,go}){
+ const [m,setM]=useState('2d'),[kind,setKind]=useState('line'),[src,setSrc]=useState('eq'),[ex,setEx]=useState('a*sin(f*x)*e^(-d*x)');
+ const [a,setA]=useState(1),[f,setF]=useState(2),[d,setD]=useState(0.1),[raw,setRaw]=useState('0,1\n1,3\n2,2\n3,5\n4,4\n5,7'),[hv,setHv]=useState(null),[out,setOut]=useState('');
+ const [pre,setPre]=useState('lattice'),[sc,setSc]=useState(1),[den,setDen]=useState(4),[sp,setSp]=useState(0.4),[wf,setWf]=useState(false),[info,setInfo]=useState({v:0,e:0}),[o3,setO3]=useState('');
+ const svg=useRef(null),mnt=useRef(null),st=useRef({}),par=useRef({});par.current={sp};
+ const pts=useMemo(()=>{try{
+  if(src==='eq'){const fn=mk(ex),bar=kind==='bar';return Array.from({length:bar?25:200},(_,i)=>{const x=i*(bar?.5:.1);return{x,y:fn({x,a,f,d})}}).filter(p=>isFinite(p.y))}
+  const r=raw.trim();if(r[0]==='['||r[0]==='{'){const j=JSON.parse(r);return j.map((p,i)=>Array.isArray(p)?{x:+p[0],y:+p[1]}:{x:+(p.x??i),y:+p.y})}
+  return r.split('\n').map((l,i)=>{const c=l.split(/[,;\t ]+/).map(Number);return c.length>1?{x:c[0],y:c[1]}:{x:i,y:c[0]}}).filter(p=>isFinite(p.x)&&isFinite(p.y))}catch(e){return null}},[src,ex,a,f,d,raw,kind]);
+ useEffect(()=>{
+  const el=mnt.current,r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true}),s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100),pv=new THREE.Group(),S=st.current;
+  cam.position.z=7;s.add(pv);el.appendChild(r.domElement);r.domElement.style.display='block';Object.assign(S,{r,s,cam,pv});
+  const rs=()=>{const w=el.clientWidth||300,h=el.clientHeight||340;r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()};
+  const ro=new ResizeObserver(rs);ro.observe(el);rs();
+  let dn=0,lx=0,ly=0,t=0,id;
+  const pd=e=>{dn=1;lx=e.clientX;ly=e.clientY},pm=e=>{if(!dn)return;pv.rotation.y+=(e.clientX-lx)*.01;pv.rotation.x+=(e.clientY-ly)*.01;lx=e.clientX;ly=e.clientY},pu=()=>{dn=0},wh=e=>{e.preventDefault();cam.position.z=Math.min(14,Math.max(2.5,cam.position.z+e.deltaY*.01))};
+  el.addEventListener('pointerdown',pd);addEventListener('pointermove',pm);addEventListener('pointerup',pu);el.addEventListener('wheel',wh,{passive:false});
+  const loop=()=>{id=requestAnimationFrame(loop);t+=.016;if(S.g)S.g.rotation.y+=par.current.sp*.01;S.an&&S.an(t);r.render(s,cam)};loop();
+  return()=>{cancelAnimationFrame(id);ro.disconnect();removeEventListener('pointermove',pm);removeEventListener('pointerup',pu);r.dispose();el.innerHTML=''}},[]);
+ useEffect(()=>{const S=st.current;if(S.g)S.pv.remove(S.g);const b=build(pre,den,sc,wf,T);S.g=b.g;S.an=b.an;S.pv.add(b.g);setInfo({v:b.v,e:b.e})},[pre,den,sc,wf,T.acc,T.acc2]);
+
+ const W=600,H=260,P0=34;let ch=html`<div class="text-xs p-4" style=${{color:'var(--mute)'}}>Cannot parse input. Use a, f, d, x, sin, cos, exp, e, pi, ^ — or CSV / JSON data.</div>`;
+ if(pts&&pts.length>1){
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys,kind==='bar'?0:Infinity),y1=Math.max(...ys,kind==='bar'?0:-Infinity);if(y0===y1){y0-=1;y1+=1}if(x0===x1)x1+=1;
+  const sx=x=>P0+(x-x0)/(x1-x0)*(W-P0-8),sy=y=>H-P0-(y-y0)/(y1-y0)*(H-P0-10),bw=(W-P0)/pts.length*.7;
+  const mv=e=>{const rc=svg.current.getBoundingClientRect(),px=(e.clientX-rc.left)/rc.width*W;let bi=0,bd=1e9;pts.forEach((p,i)=>{const dd=Math.abs(sx(p.x)-px);if(dd<bd){bd=dd;bi=i}});setHv(pts[bi])};
+  ch=html`<svg ref=${svg} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="w-full" onMouseMove=${mv} onMouseLeave=${()=>setHv(null)}>
+   <rect width=${W} height=${H} fill=${T.panel}/>
+   ${[0,1,2,3,4].map(i=>{const y=y0+(y1-y0)*i/4;return html`<g key=${i}><line x1=${P0} x2=${W-8} y1=${sy(y)} y2=${sy(y)} stroke=${T.line} strokeWidth="1"/><text x="2" y=${sy(y)+3} fontSize="9" fill=${T.mute}>${y.toFixed(2)}</text></g>`})}
+   ${y0<0&&y1>0&&html`<line x1=${P0} x2=${W-8} y1=${sy(0)} y2=${sy(0)} stroke=${T.mute} strokeDasharray="4 3"/>`}
+   ${kind==='line'&&html`<polyline fill="none" stroke=${T.acc} strokeWidth="2" points=${pts.map(p=>sx(p.x)+','+sy(p.y)).join(' ')}/>`}
+   ${kind==='scatter'&&pts.map((p,i)=>html`<circle key=${i} cx=${sx(p.x)} cy=${sy(p.y)} r="3" fill=${T.acc}/>`)}
+   ${kind==='bar'&&pts.map((p,i)=>html`<rect key=${i} x=${sx(p.x)-bw/2} y=${Math.min(sy(p.y),sy(0))} width=${bw} height=${Math.abs(sy(0)-sy(p.y))} fill=${T.acc}/>`)}
+   ${hv&&html`<g><line x1=${sx(hv.x)} x2=${sx(hv.x)} y1="8" y2=${H-P0} stroke=${T.acc2}/><circle cx=${sx(hv.x)} cy=${sy(hv.y)} r="4" fill=${T.acc2}/><text x=${Math.min(sx(hv.x)+6,W-90)} y="20" fontSize="11" fill=${T.acc2}>x=${hv.x.toFixed(2)} y=${hv.y.toFixed(3)}</text></g>`}
+  </svg>`}
+ const analyze=()=>{if(!pts||pts.length<2)return;const ys=pts.map(p=>p.y),mx=Math.max(...ys),mn=Math.min(...ys),mean=ys.reduce((s,v)=>s+v,0)/ys.length;let pk=0,zc=0;ys.forEach((v,i)=>{if(i&&i<ys.length-1&&v>ys[i-1]&&v>ys[i+1])pk++;if(i&&ys[i-1]*v<0)zc++});
+  const h=Math.abs(ys[0])>Math.abs(ys[ys.length-1])*1.5?'amplitude decays toward the end':'no clear decay';
+  setOut(shape([`${pts.length} points, y from ${mn.toFixed(2)} to ${mx.toFixed(2)}, mean ${mean.toFixed(2)}.`,`${pk} peaks and ${zc} zero crossings; ${h}.`,src==='eq'?`Envelope set by a=${a}, f=${f}, d=${d}.`:'Fit a trend before extrapolating.','Check units and sampling before trusting the tail.'],P,B))};
+ const share2=()=>{onSnap({label:'2D graph ('+kind+')',img:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(svg.current)),summary:src==='eq'?'y = '+ex:'custom data'});go()};
+ const an3=()=>setO3(shape([`${{lattice:'Crystal lattice',poly:'Tesseract projection',cloud:'Wave point cloud'}[pre]}: ${info.v} vertices, ${info.e} edges.`,`Scale ${sc}, density ${den}, spin ${sp}.`,pre==='lattice'?'Cubic symmetry with uniform 0.8-unit bonds.':pre==='poly'?'Rotating in the XW and YZ planes; edge lengths are fixed in 4D, not in projection.':'Standing-wave interference; amplitude bounded by scale.','Vary density to test for aliasing.'],P,B));
+ const share3=()=>{const S=st.current;S.r.render(S.s,S.cam);onSnap({label:'3D '+pre,img:S.r.domElement.toDataURL('image/png'),summary:info.v+' vertices'});go()};
+ return html`<div class="p-3">
+  <div class="flex gap-2 mb-3"><button class=${'btn '+(m==='2d'?'on':'')} onClick=${()=>setM('2d')}>2D Graph Workbench</button><button class=${'btn '+(m==='3d'?'on':'')} onClick=${()=>setM('3d')}>3D Viewport</button></div>
+  <div style=${{display:m==='2d'?'':'none'}}>
+   <div class="flex gap-2 mb-2 flex-wrap">${['line','scatter','bar'].map(k=>html`<button key=${k} class=${'btn '+(kind===k?'on':'')} onClick=${()=>setKind(k)}>${k}</button>`)}<button class=${'btn '+(src==='eq'?'on':'')} onClick=${()=>setSrc('eq')}>equation</button><button class=${'btn '+(src==='data'?'on':'')} onClick=${()=>setSrc('data')}>CSV / JSON</button></div>
+   ${src==='eq'?html`<div><div class="lbl mb-1">y(x) =</div><input class="fld mono mb-2" value=${ex} onChange=${e=>setEx(e.target.value)}/>
+    <${Rs} l="Amplitude (a)" v=${a} set=${setA} min=${0} max=${5} step=${.1}/><${Rs} l="Frequency (f)" v=${f} set=${setF} min=${0} max=${8} step=${.1}/><${Rs} l="Decay (d)" v=${d} set=${setD} min=${0} max=${1} step=${.01}/></div>`
+    :html`<textarea class="fld mono mb-2" rows="5" value=${raw} onChange=${e=>setRaw(e.target.value)} placeholder="x,y per line — or JSON"></textarea>`}
+   <div class="rounded-lg overflow-hidden mb-2" style=${{border:'1px solid var(--line)'}}>${ch}</div>
+   <div class="flex gap-2 mb-2"><button class="btn on" onClick=${analyze}>Ask AI to Analyze Graph</button><button class="btn" onClick=${share2}>Share to Comms</button></div>
+   ${out&&html`<div class="pn rounded-lg p-3 text-sm whitespace-pre-wrap">${out}</div>`}
+  </div>
+  <div style=${{display:m==='3d'?'':'none'}}>
+   <div class="flex gap-2 mb-2 flex-wrap">${[['lattice','Crystal Lattice'],['poly','Polytope'],['cloud','Wave Cloud']].map(([k,n])=>html`<button key=${k} class=${'btn '+(pre===k?'on':'')} onClick=${()=>setPre(k)}>${n}</button>`)}<button class=${'btn '+(wf?'on':'')} onClick=${()=>setWf(!wf)}>wireframe</button></div>
+   <div ref=${mnt} class="rounded-lg mb-2" style=${{height:340,border:'1px solid var(--line)',background:'var(--panel)',touchAction:'none',cursor:'grab'}}></div>
+   <div class="text-[11px] mb-2" style=${{color:'var(--mute)'}}>Drag to rotate · scroll to zoom · ${info.v} vertices, ${info.e} edges</div>
+   <${Rs} l="Node scale" v=${sc} set=${setSc} min=${.4} max=${2.5} step=${.1}/><${Rs} l="Density" v=${den} set=${setDen} min=${2} max=${6} step=${1}/><${Rs} l="Rotation speed" v=${sp} set=${setSp} min=${0} max=${3} step=${.1}/>
+   <div class="flex gap-2 my-2"><button class="btn on" onClick=${an3}>Analyze 3D Geometry</button><button class="btn" onClick=${share3}>Share to Comms</button></div>
+   ${o3&&html`<div class="pn rounded-lg p-3 text-sm whitespace-pre-wrap">${o3}</div>`}
+  </div></div>`}
+
+const fit=(src,cb)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.85))};im.src=src};
+const cname=(r,g,b)=>{r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn,s=d?d/(1-Math.abs(2*l-1)):0;if(l<.15)return'black';if(l>.88&&s<.25)return'white';if(s<.15)return'gray';let h=mx===r?((g-b)/d%6):mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;return h<15||h>=345?'red':h<45?'orange':h<70?'yellow':h<165?'green':h<200?'teal':h<260?'blue':h<300?'purple':'pink'};
+const scan=(url,cb)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.drawImage(im,0,0,64,64);const D=x.getImageData(0,0,64,64).data,g=[],bk={};let sum=0,warm=0;
+ for(let i=0;i<4096;i++){const r=D[i*4],gg=D[i*4+1],b=D[i*4+2],y=.3*r+.59*gg+.11*b;g.push(y);sum+=y;if(r>b)warm++;const k=((r>>6)<<4)|((gg>>6)<<2)|(b>>6),o=bk[k]||(bk[k]={n:0,r:0,g:0,b:0});o.n++;o.r+=r;o.g+=gg;o.b+=b}
+ const m=sum/4096,con=Math.sqrt(g.reduce((s,v)=>s+(v-m)**2,0)/4096);let ed=0,sd=0;
+ for(let yy=1;yy<63;yy++)for(let xx=1;xx<63;xx++){if(Math.abs(g[yy*64+xx+1]-g[yy*64+xx-1])+Math.abs(g[(yy+1)*64+xx]-g[(yy-1)*64+xx])>40)ed++}
+ for(let yy=0;yy<64;yy++)for(let xx=0;xx<32;xx++)sd+=Math.abs(g[yy*64+xx]-g[yy*64+63-xx]);
+ const names=[...new Set(Object.values(bk).sort((a,b)=>b.n-a.n).slice(0,6).map(o=>cname(o.r/o.n,o.g/o.n,o.b/o.n)))].slice(0,3);
+ cb({bri:m,con,edge:ed/3844,sym:1-sd/(2048*255),warm:warm/4096,names})};im.src=url};
+function Cam({P,B,onSnap,go,speak,apiKey,active}){
+ const [on,setOn]=useState(false),[err,setErr]=useState(''),[shot,setShot]=useState(null),[out,setOut]=useState(''),[busy,setBusy]=useState(false),[face,setFace]=useState('environment');
+ const vr=useRef(null),sr=useRef(null);
+ const stop=()=>{try{sr.current&&sr.current.getTracks().forEach(t=>t.stop())}catch(e){}sr.current=null;if(vr.current)vr.current.srcObject=null;setOn(false)};
+ useEffect(()=>{if(!active)stop()},[active]);
+ useEffect(()=>()=>{try{sr.current&&sr.current.getTracks().forEach(t=>t.stop())}catch(e){}},[]);
+ const start=async(f=face)=>{setErr('');stop();try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:f},audio:false});sr.current=s;vr.current.srcObject=s;await vr.current.play().catch(()=>{});setOn(true)}catch(e){setErr('Live camera is blocked or unavailable here ('+(e.name||'error')+'). Use “Take / choose photo” instead, or open the installed app and allow camera access.')}};
+ const flip=()=>{const f=face==='environment'?'user':'environment';setFace(f);if(on)start(f)};
+ const cap=()=>{const v=vr.current;if(!v||!v.videoWidth)return;const c=document.createElement('canvas'),s=Math.min(1,800/v.videoWidth);c.width=v.videoWidth*s;c.height=v.videoHeight*s;c.getContext('2d').drawImage(v,0,0,c.width,c.height);setShot(c.toDataURL('image/jpeg',.85));setOut('')};
+ const pick=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>fit(r.result,u=>{setShot(u);setOut('')});r.readAsDataURL(f);e.target.value=''};
+ const run=async()=>{if(!shot)return;setBusy(true);let txt=null;
+  if(apiKey){try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,system:compile(P,B,[]),messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:shot.split(',')[1]}},{type:'text',text:'Analyze what you see. Identify objects, notable details, and anything worth investigating.'}]}]})});const j=await r.json();txt=j.content&&j.content.map(c=>c.text||'').join('')}catch(e){txt=null}}
+  if(!txt)await new Promise(res=>scan(shot,a=>{txt=shape([`Light: ${a.bri<60?'dark':a.bri>170?'bright':'moderate'} (avg ${a.bri|0}/255), contrast ${a.con|0}.`,`Dominant colors: ${a.names.join(', ')}.`,`Detail: ${a.edge<.08?'smooth, few features':a.edge<.18?'moderate structure':'busy, many edges'} (${(a.edge*100).toFixed(0)}% edge density).`,`Palette is ${a.warm>.55?'warm':'cool'}; layout looks ${a.sym>.8?'symmetric':'asymmetric'}.`],P,B)+'\nNote: offline mode reads color, light and structure only. Add an API key (key icon) for object recognition.';res()}));
+  setOut(txt);setBusy(false);if(speak)speak(txt)};
+ const share=()=>{onSnap({label:'Camera photo',img:shot,summary:(out||'photo').split('\n').slice(0,2).join(' ').slice(0,120)});go()};
+ return html`<div class="p-3">
+  <div class="rounded-lg overflow-hidden mb-2" style=${{border:'1px solid var(--line)',background:'#000',display:on?'':'none'}}><video ref=${vr} playsInline muted autoPlay class="w-full" style=${{maxHeight:360,objectFit:'cover'}}></video></div>
+  ${!on&&!shot&&html`<div class="pn rounded-lg p-6 text-center text-sm mb-2" style=${{color:'var(--mute)'}}>Point the camera at something and let ${B.name} analyze it.</div>`}
+  ${shot&&html`<img src=${shot} alt="captured" class="rounded-lg mb-2 w-full" style=${{maxHeight:360,objectFit:'contain',background:'#000'}}/>`}
+  <div class="flex gap-2 flex-wrap mb-2">
+   ${on?html`<button class="btn on" onClick=${cap}>Capture</button><button class="btn" onClick=${flip}>Flip</button><button class="btn" onClick=${stop}>Stop camera</button>`:html`<button class="btn on" onClick=${()=>start()}>Start camera</button>`}
+   <label class="btn" style=${{cursor:'pointer'}}>Take / choose photo<input type="file" accept="image/*" capture="environment" class="hidden" onChange=${pick}/></label>
+  </div>
+  ${err&&html`<div class="text-xs mb-2" style=${{color:'var(--acc2)'}}>${err}</div>`}
+  ${shot&&html`<div class="flex gap-2 mb-2"><button class="btn on" onClick=${run}>${busy?'Analyzing…':'Analyze with '+B.name}</button><button class="btn" onClick=${share}>Share to Comms</button><button class="btn" onClick=${()=>{setShot(null);setOut('')}}>Clear</button></div>`}
+  ${out&&html`<div class="pn rounded-lg p-3 text-sm whitespace-pre-wrap">${out}</div>`}
+  <div class="text-[11px] mt-2" style=${{color:'var(--mute)'}}>Photos stay in your browser. They are only sent out if you add an API key for live analysis.</div></div>`}
+
+function Comms({P,B,L,snap}){
+ const [cs,setCs]=useState(['Mei Kamino','Yun Arikawa','Dr. Ashihara']),[cur,setCur]=useState('Mei Kamino'),[th,setTh]=useState({}),[t,setT]=useState(''),[nc,setNc]=useState('');
+ const msgs=th[cur]||[],add=(w,m)=>setTh(h=>({...h,[w]:[...(h[w]||[]),m]}));
+ const R=['Copy that. I’ll cross-check against the field logs.','Interesting — can you send the raw numbers?','Understood. We need a summary by tonight.','That lines up with what we saw at the survey site.','Hold on, pulling up the last sample set.'];
+ const send=(text,img)=>{if(!text&&!img)return;add(cur,{me:1,text,img});setT('');const w=cur;setTimeout(()=>add(w,{text:R[Math.floor(Math.random()*R.length)]}),1100)};
+ const last=[...msgs].reverse().find(m=>!m.me&&!m.ai),first=cur.split(' ').pop();
+ const draft=()=>setT(shape([`Thanks ${first} — noted${last?' your point: “'+last.text.slice(0,30)+'…”':''}.`,`I’ll review ${(P.interests||'the data').split(',')[0]} and report back.`,'Sending what I have shortly.'],P,B,true));
+ const summ=()=>add(cur,{ai:1,text:shape([`Thread with ${cur}: ${msgs.filter(m=>!m.ai).length} messages.`,last?`Their latest: “${last.text}”`:'No replies from them yet.',`Open item: confirm next step on ${(P.interests||'the project').split(',')[0]}.`],P,B)});
+ return html`<div class="p-3">
+  <div class="flex gap-2 mb-2 flex-wrap">${cs.map(c=>html`<button key=${c} class=${'btn '+(cur===c?'on':'')} onClick=${()=>setCur(c)}>${c}</button>`)}
+   <span class="inline-flex gap-1"><input class="fld" style=${{width:110}} placeholder="+ Add Contact" value=${nc} onChange=${e=>setNc(e.target.value)}/><button class="btn" aria-label="Add contact" onClick=${()=>{if(nc.trim()&&!cs.includes(nc.trim())){setCs([...cs,nc.trim()]);setCur(nc.trim());setNc('')}}}><${Ic} n="plus" s=${13}/></button></span></div>
+  <div class="space-y-2 mb-3 min-h-[160px]">${msgs.length===0&&html`<div class="text-xs" style=${{color:'var(--mute)'}}>No messages with ${cur} yet.</div>`}
+   ${msgs.map((m,i)=>html`<div key=${i} class=${'flex '+(m.me?'justify-end':'justify-start')}><div class="pn rounded-2xl px-3 py-2 max-w-[85%] text-sm whitespace-pre-wrap" style=${m.me?{background:'var(--acc)',color:'#111',borderColor:'var(--acc)'}:m.ai?{borderColor:'var(--acc2)'}:{}}>
+    ${m.ai&&html`<div class="lbl mb-1">AI summary</div>`}${m.text}${m.img&&html`<img src=${m.img} class="rounded mt-1" style=${{maxHeight:170,maxWidth:'100%'}} alt="snapshot"/>`}</div></div>`)}</div>
+  <div class="flex gap-2 mb-2 flex-wrap"><span class="lbl self-center">AI assist · ${B.name}</span><button class="btn" onClick=${draft}>Draft reply</button><button class="btn" onClick=${summ}>Summarize</button>
+   <button class="btn" disabled=${!snap} style=${{opacity:snap?1:.4}} onClick=${()=>send('Snapshot: '+snap.label+' — '+snap.summary,snap.img)}>Attach snapshot</button></div>
+  <div class="flex gap-2"><input class="fld" style=${{fontSize:'16px'}} placeholder=${'Text '+cur+'…'} value=${t} onChange=${e=>setT(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&send(t)}/><button class="btn on" aria-label="Send" onClick=${()=>send(t)}><${Ic} n="send" s=${15}/></button></div>
+  ${!snap&&html`<div class="text-[11px] mt-2" style=${{color:'var(--mute)'}}>Tip: use “Share to Comms” in the Lab to create a snapshot.</div>`}</div>`}
+
+function App(){
+  const [P,setP]=useState(()=>load('nrt_p',PRO['Field Researcher']));
+  const [behs,setBehs]=useState(()=>load('nrt_b',BEH0));
+  const [aid,setAid]=useState(()=>load('nrt_a','pelops'));
+  const [auto,setAuto]=useState(true);
+  const [seen,setSeen]=useState({});
+  const [L,setL]=useState(()=>load('nrt_l',[]));
+  const [msgs,setMsgs]=useState([{id:0,role:'ai',text:'Neural link established. Configure me in the panel, then speak.',badge:''}]);
+  const [inp,setInp]=useState('');
+  const [status,setStatus]=useState('idle');
+  const [tab,setTab]=useState('profile');
+  const [open,setOpen]=useState(window.innerWidth>=768);
+  const [modal,setModal]=useState(false);
+  const [key,setKey]=useState('');
+  const [nn,setNn]=useState('');
+  const [prof,setProf]=useState('Field Researcher');
+  const iv=useRef(null),end=useRef(null);
+  const B=behs.find(b=>b.id===aid)||behs[0];
+  const upB=p=>setBehs(bs=>bs.map(b=>b.id===B.id?{...b,...p}:b));
+  const [theme,setTheme]=useState('pelops'),[sync,setSync]=useState(true),[view,setView]=useState('chat'),[snap,setSnap]=useState(null),[say,setSay]=useState(false),[toon,setToon]=useState(true);
+  const speak=txt=>{try{const s=window.speechSynthesis;if(!s)return;s.cancel();const u=new SpeechSynthesisUtterance(txt.replace(/[•*◈]/g,'').replace(/\n+/g,'. '));
+    u.pitch=toon?(B.kind==='yung'?1.4:1.9):1;u.rate=toon?(B.kind==='yung'?.95:1.15):1;u.volume=1;
+    const vs=s.getVoices().filter(v=>/^en/i.test(v.lang));if(vs.length)u.voice=vs.find(v=>/samantha|zira|female|google us/i.test(v.name))||vs[0];s.speak(u)}catch(e){}};
+  useEffect(()=>{if(!say){try{window.speechSynthesis.cancel()}catch(e){}}},[say]);
+  const tk=sync?({pelops:'pelops',yung:'yung'}[B.id]||'ultima'):theme,T=THEMES[tk];
+  useEffect(()=>{const s=document.documentElement.style;['bg','panel','ink','mute','line','soft','acc','acc2'].forEach(k=>s.setProperty('--'+k,T[k]))},[tk]);
+
+  useEffect(()=>{try{localStorage.setItem('nrt_p',JSON.stringify(P));localStorage.setItem('nrt_b',JSON.stringify(behs));localStorage.setItem('nrt_a',JSON.stringify(aid));localStorage.setItem('nrt_l',JSON.stringify(L))}catch(e){}},[P,behs,aid,L]);
+  useEffect(()=>{end.current&&end.current.scrollIntoView({block:'end'})},[msgs,status]);
+  useEffect(()=>()=>clearInterval(iv.current),[]);
+
+  const learn=t=>{
+    if(!auto)return;
+    const s={...seen},add=[];
+    kw(t).forEach(w=>{s[w]=(s[w]||0)+1;if(s[w]===2&&!L.some(x=>x.w===w))add.push({id:Date.now()+w,w})});
+    setSeen(s);if(add.length)setL(l=>[...l,...add]);
+  };
+  async function send(){
+    const t=inp.trim();if(!t||status!=='idle')return;
+    setInp('');setMsgs(m=>[...m,{id:Date.now(),role:'user',text:t}]);learn(t);setStatus('thinking');
+    let reply=null;
+    if(key){try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:compile(P,B,L),messages:[{role:'user',content:t}]})});
+      const j=await r.json();reply=j.content&&j.content.map(c=>c.text||'').join('');
+    }catch(e){reply=null}}
+    const wait=reply?0:450+B.a*9;
+    setTimeout(()=>{
+      const full=reply||generate(t,P,B,L),id=Date.now()+1;
+      const badge=`${B.name} · Depth ${B.a} · Detail ${B.b} · Curiosity ${B.c} · Warmth ${B.w}${reply?' · live':''}`;
+      setMsgs(m=>[...m,{id,role:'ai',text:'',badge}]);setStatus('responding');if(say)speak(full);
+      let i=0;const step=B.b<30?3:2,ms=10+(100-B.w)*.12+(B.b<30?-4:0);
+      iv.current=setInterval(()=>{
+        i+=step;const done=i>=full.length;
+        setMsgs(m=>m.map(x=>x.id===id?{...x,text:full.slice(0,i)}:x));
+        if(done){clearInterval(iv.current);setStatus('idle')}
+      },ms);
+    },wait);
+  }
+  const saveNew=()=>{
+    if(!nn.trim())return;const id='c'+Date.now();
+    setBehs(b=>[...b,{...B,id,name:nn.trim(),kind:'custom',color:'#8b5cf6'}]);setAid(id);setNn('');
+  };
+  const interestTags=(P.interests||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+  const drawer=html`<aside class="pn flex flex-col fixed md:static inset-y-0 right-0 z-20 w-[92%] max-w-[390px] md:w-[380px] md:max-w-none" style=${{paddingTop:'env(safe-area-inset-top,0px)'}}>
+    <div class="flex items-center gap-2 p-3" style=${{borderBottom:'1px solid var(--line)'}}>
+      <button class=${'btn '+(tab==='profile'?'on':'')} onClick=${()=>setTab('profile')}><span class="inline-flex gap-1 items-center"><${Ic} n="user" s=${13}/> Profile</span></button>
+      <button class=${'btn '+(tab==='behavior'?'on':'')} onClick=${()=>setTab('behavior')}><span class="inline-flex gap-1 items-center"><${Ic} n="cpu" s=${13}/> Behavior</span></button>
+      <button class="btn ml-auto" aria-label="Close panel" onClick=${()=>setOpen(false)}><${Ic} n="x" s=${13}/></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-3">
+    ${tab==='profile'?html`<div>
+      <div class="lbl mb-1">Profile presets</div>
+      <div class="flex gap-2 mb-3 flex-wrap">${Object.keys(PRO).map(k=>html`<button key=${k} class=${'btn '+(prof===k?'on':'')} onClick=${()=>{setProf(k);setP(PRO[k])}}>${k}</button>`)}</div>
+      <${Fl} l="Name / Callsign"><input class="fld" value=${P.name} onChange=${e=>setP({...P,name:e.target.value})} placeholder="e.g. Dr. Mori"/><//>
+      <${Fl} l="Role / Focus"><input class="fld" value=${P.role} onChange=${e=>setP({...P,role:e.target.value})} placeholder="researcher, student, engineer…"/><//>
+      <div class="lbl mb-1">Preferred tone of address</div>
+      <div class="flex gap-2 mb-3 flex-wrap">${TONES.map(t=>html`<button key=${t} class=${'btn '+(P.tone===t?'on':'')} onClick=${()=>setP({...P,tone:t})}>${t}</button>`)}</div>
+      <${Fl} l="Core interests / context (comma separated)"><textarea class="fld" rows="2" value=${P.interests} onChange=${e=>setP({...P,interests:e.target.value})}></textarea><//>
+      <div class="flex flex-wrap gap-1 mb-4">${interestTags.map((t,i)=>html`<span key=${i} class="chip">${t}</span>`)}</div>
+      <div class="flex items-center justify-between mb-2"><div class="lbl">Auto-adaptation</div>
+        <button class=${'btn '+(auto?'on':'')} onClick=${()=>setAuto(!auto)}>${auto?'ON':'OFF'}</button></div>
+      <div class="lbl mb-1">Learned traits (${L.length})</div>
+      ${L.length===0&&html`<div class="text-xs mb-2" style=${{color:'var(--mute)'}}>Repeat a topic twice in chat and it appears here.</div>`}
+      <div class="flex flex-wrap gap-1 mb-2">${L.map(x=>html`<span key=${x.id} class="chip"><input class="bg-transparent outline-none w-20" value=${x.w} onChange=${e=>setL(l=>l.map(y=>y.id===x.id?{...y,w:e.target.value}:y))}/><button aria-label="Remove trait" onClick=${()=>setL(l=>l.filter(y=>y.id!==x.id))}><${Ic} n="x" s=${11}/></button></span>`)}</div>
+      <button class="btn" onClick=${()=>setL(l=>[...l,{id:Date.now(),w:'new trait'}])}>+ Add trait</button>
+    </div>`:html`<div>
+      <div class="lbl mb-1">Behavior presets</div>
+      <div class="flex gap-2 mb-3 flex-wrap">${behs.map(b=>html`<span key=${b.id} class="inline-flex"><button class=${'btn '+(aid===b.id?'on':'')} onClick=${()=>setAid(b.id)}>${b.name}</button>${b.kind==='custom'&&html`<button class="btn" aria-label="Delete preset" onClick=${()=>{setBehs(bs=>bs.filter(x=>x.id!==b.id));if(aid===b.id)setAid('pelops')}}><${Ic} n="x" s=${11}/></button>`}</span>`)}</div>
+      <div class="flex gap-2 mb-4"><input class="fld" placeholder="+ New behavior preset name" value=${nn} onChange=${e=>setNn(e.target.value)}/><button class="btn on" onClick=${saveNew}><${Ic} n="plus" s=${14}/></button></div>
+      <${Sl} l="Analytical depth" lo="surface summary" hi="step-by-step breakdown" v=${B.a} set=${v=>upB({a:v})}/>
+      <${Sl} l="Response brevity" lo="terse tactical" hi="detailed" v=${B.b} set=${v=>upB({b:v})}/>
+      <${Sl} l="Curiosity & questioning" lo="answers only" hi="probing follow-ups" v=${B.c} set=${v=>upB({c:v})}/>
+      <${Sl} l="Warmth / playfulness" lo="cool, stoic" hi="warm, curious" v=${B.w} set=${v=>upB({w:v})}/>
+      <${Fl} l="Behavioral directives (one per line)"><textarea class="fld" rows="4" value=${B.d} onChange=${e=>upB({d:e.target.value})} placeholder="Always use bullet points&#10;Challenge assumptions&#10;Speak like a curious lab dog"></textarea><//>
+      <div class="text-[11px]" style=${{color:'var(--mute)'}}>Recognized: bullet · challenge · dog/lab/woof. Changes apply to the next reply.</div>
+    </div>`}
+    </div></aside>`;
+
+  return html`<div class="h-full flex flex-col md:flex-row overflow-hidden">
+    <main class="flex-1 flex flex-col min-w-0 min-h-0">
+      <header class="pn flex items-center gap-3 px-3 py-2" style=${{borderWidth:'0 0 1px 0'}}>
+        <div class="hud"><${Avatar} kind=${B.kind} status=${status} size=${56}/></div>
+        <div class="min-w-0"><div class="mono text-sm font-bold tracking-widest" style=${{color:'var(--acc)',textShadow:'0 0 10px var(--acc)'}}>NARATAKE <span style=${{color:'var(--mute)',fontWeight:400,textShadow:'none'}}>ナラタケ</span></div>
+          <div class="text-xs truncate" style=${{color:'var(--mute)'}}>${B.name} · ${status.toUpperCase()} · linked to ${P.name||'Operator'}</div></div>
+        <div class="ml-auto flex gap-2">
+          <button class="btn" aria-label="API key" onClick=${()=>setModal(true)}><${Ic} n="key" s=${14}/></button>
+          <button class="btn" aria-label="Toggle panel" onClick=${()=>setOpen(!open)}><${Ic} n="panel" s=${14}/></button></div>
+      </header>
+      <div class="tick">SYS ▸ LINK STABLE ▸ ${B.name.toUpperCase()} ▸ OPERATOR ${(P.name||'UNKNOWN').toUpperCase()} ▸ SYNC ${Math.round((B.a+B.w)/2)}% ▸ 接続中</div>
+      <div class="pn flex items-center gap-2 px-3 py-1 overflow-x-auto" style=${{borderWidth:'0 0 1px 0'}}>
+        ${[['chat','Chat'],['comms','Comms'],['lab','Lab'],['cam','Camera']].map(([v,n])=>html`<button key=${v} class=${'btn '+(view===v?'on':'')} onClick=${()=>setView(v)}>${n}</button>`)}
+        <span style=${{width:1,height:20,background:'var(--line)',flex:'none'}}></span>
+        ${Object.entries(THEMES).map(([k,t])=>html`<button key=${k} title=${t.name} aria-label=${t.name+' theme'} onClick=${()=>{setTheme(k);setSync(false)}} style=${{width:22,height:22,borderRadius:99,flex:'none',background:'linear-gradient(135deg,'+t.acc+' 50%,'+t.acc2+' 50%)',border:tk===k?'2px solid var(--ink)':'2px solid transparent'}}></button>`)}
+        <button class=${'btn '+(sync?'on':'')} style=${{flex:'none'}} onClick=${()=>setSync(!sync)}>Auto-sync</button>
+        <span style=${{width:1,height:20,background:'var(--line)',flex:'none'}}></span>
+        <button class=${'btn '+(say?'on':'')} style=${{flex:'none'}} aria-label="Read replies aloud" onClick=${()=>{const n=!say;setSay(n);if(n)speak('Voice online!')}}><span class="inline-flex gap-1 items-center"><${Ic} n="vol" s=${13}/> Voice ${say?'ON':'OFF'}</span></button>
+        <button class=${'btn '+(toon?'on':'')} style=${{flex:'none'}} aria-label="Cartoon voice" onClick=${()=>{const n=!toon;setToon(n);if(say)setTimeout(()=>speak(n?'Cartoon mode, activated!':'Normal voice.'),0)}}>Cartoon ${toon?'ON':'OFF'}</button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-3 py-4 space-y-3" style=${{display:view==='chat'?'':'none'}}>
+        ${msgs.map(m=>html`<div key=${m.id} class=${'flex '+(m.role==='user'?'justify-end':'justify-start')}>
+          <div class="pn rounded-2xl px-3 py-2 max-w-[88%] text-sm whitespace-pre-wrap" style=${m.role==='user'?{background:'var(--acc)',color:'#111',borderColor:'var(--acc)'}:{}}>
+            ${m.role==='ai'&&html`<div class="lbl mb-1">${B.name}</div>`}${m.text}${m.role==='ai'&&status==='responding'&&m.id===msgs[msgs.length-1].id&&html`<span class="cur">▍</span>`}
+            ${m.badge&&html`<div class="mono mt-2 text-[10px]" style=${{color:'var(--mute)'}}>◈ ${m.badge}</div>`}
+          </div></div>`)}
+        ${status==='thinking'&&html`<div class="mono text-xs" style=${{color:'var(--mute)'}}>${B.name} is processing<span class="cur">…</span></div>`}
+        <div ref=${end}></div>
+      </div>
+      <div class="pn p-2 flex gap-2" style=${{borderWidth:'1px 0 0 0',display:view==='chat'?'':'none'}}>
+        <input class="fld" style=${{fontSize:'16px'}} placeholder="Transmit a message…" value=${inp} onChange=${e=>setInp(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&send()}/>
+        <button class="btn on" aria-label="Send" onClick=${send}><${Ic} n="send" s=${16}/></button>
+      </div>
+    <div class="flex-1 min-h-0 overflow-y-auto" style=${{display:view==='comms'?'':'none'}}><${Comms} P=${P} B=${B} L=${L} snap=${snap}/></div>
+      <div class="flex-1 min-h-0 overflow-y-auto" style=${{display:view==='lab'?'':'none'}}><${Lab} P=${P} B=${B} T=${T} onSnap=${setSnap} go=${()=>setView('comms')}/></div>
+    <div class="flex-1 min-h-0 overflow-y-auto" style=${{display:view==='cam'?'':'none'}}><${Cam} P=${P} B=${B} onSnap=${setSnap} go=${()=>setView('comms')} speak=${say?speak:null} apiKey=${key} active=${view==='cam'}/></div>
+    </main>
+    ${open&&drawer}
+    ${modal&&html`<div class="fixed inset-0 z-30 flex items-center justify-center p-4" style=${{background:'rgba(0,0,0,.55)'}}>
+      <div class="pn rounded-xl p-4 w-full max-w-md max-h-[90%] overflow-y-auto">
+        <div class="flex justify-between items-center mb-2"><div class="font-bold text-sm">Live LLM (optional)</div><button class="btn" onClick=${()=>setModal(false)}><${Ic} n="x" s=${13}/></button></div>
+        <p class="text-xs mb-2" style=${{color:'var(--mute)'}}>Paste an Anthropic API key to route replies through a live model using the compiled prompt below. The key stays in memory only. Browser calls may be blocked on hosted pages; export and run locally for best results. On failure, the simulated engine takes over.</p>
+        <input class="fld mb-3" type="password" placeholder="sk-ant-…" value=${key} onChange=${e=>setKey(e.target.value)}/>
+        <div class="lbl mb-1">Compiled system prompt</div>
+        <pre class="mono text-[11px] whitespace-pre-wrap p-2 rounded-lg" style=${{background:'var(--soft)'}}>${compile(P,B,L)}</pre>
+      </div></div>`}
+  </div>`;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
+</script>
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</body>
+</html>
